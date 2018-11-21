@@ -1,0 +1,14 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div>
+    <textarea style="min-width: 100%; min-height: 200px">
+        @Model.Text
+    </textarea>
+
+    <form method="POST">
+        <input type="text" name="input" id="input" value="@Model.Url" style="min-width: 100%;"/>
+        <input type="submit" />
+    </form>
+</div>
