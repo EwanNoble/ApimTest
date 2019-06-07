@@ -22,7 +22,7 @@
         "resourceNamePrefix": "[toLower(concat('poc-', parameters('resourceEnvironmentName'),'-', parameters('serviceName')))]",
         "vnetName": "[concat(variables('resourceNamePrefix'), '-vnet')]",
         "interalSubnetName": "[concat(variables('resourceNamePrefix'), '-int-app-sn-01')]",
-        "externalSubnetName": "[concat(variables('resourceNamePrefix'), '-int-app-sn-01')]",
+        "externalSubnetName": "[concat(variables('resourceNamePrefix'), '-ext-app-sn-01')]",
         "clientAppServiceName": "[concat(variables('resourceNamePrefix'), 'cli-as')]",
         "clientAppServicePlanName": "[concat(variables('resourceNamePrefix'), 'cli-asp')]",
         "apiAppServiceName": "[concat(variables('resourceNamePrefix'), 'api-as')]",
@@ -46,27 +46,35 @@
                         "value": "[variables('vnetName')]"
                     },
                     "armVnetAddressSpaceCIDR": {
-                        "value": "10.0.0.1/16"
+                        "value": "10.0.0.0/16"
                     },
                     "subnetConfiguration": {
                         "value": [
                             {
                                 "name": "[variables('interalSubnetName')]",
                                 "properties": {
-                                    "addressPrefix": "10.0.0.1/24",
+                                    "addressPrefix": "10.0.0.0/24",
                                     "serviceEndpoints": [
-                                        "Microsoft.Web",
-                                        "Microsoft.Sql"
+                                        {
+                                            "service": "Microsoft.Web"
+                                        },
+                                        {
+                                            "service": "Microsoft.Sql"
+                                        }
                                     ]
                                 }
                             },
                             {
                                 "name": "[variables('externalSubnetName')]",
                                 "properties": {
-                                    "addressPrefix": "10.0.1.1/24",
+                                    "addressPrefix": "10.0.1.0/24",
                                     "serviceEndpoints": [
-                                        "Microsoft.Web",
-                                        "Microsoft.Sql"
+                                        {
+                                            "service": "Microsoft.Web"
+                                        },
+                                        {
+                                            "service": "Microsoft.Sql"
+                                        }
                                     ]
                                 }
                             }
@@ -202,12 +210,12 @@
                     "subnetResourceId": {
                         "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('interalSubnetName'))]"
                     }
-                },
-                "dependsOn": [
-                    "virtual-network",
-                    "api-app-service-plan"
-                ]
-            }
+                }
+            },
+            "dependsOn": [
+                "virtual-network",
+                "api-app-service-plan"
+            ]
         },
         {
             "apiVersion": "2017-05-10",
