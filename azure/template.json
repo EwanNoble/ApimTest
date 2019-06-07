@@ -278,6 +278,28 @@
                     "dependsOn": [
                         "[variables('sqlServerName')]"
                     ]
+                },
+                {
+                    "name": "[variables('interalSubnetName')]",
+                    "type": "virtualNetworkRules",
+                    "apiVersion": "2015-05-01-preview",
+                    "properties": {
+                        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('interalSubnetName'))]"
+                    },
+                    "dependsOn": [
+                        "[variables('sqlServerName')]"
+                    ]
+                },
+                {
+                    "name": "[variables('externalSubnetName')]",
+                    "type": "virtualNetworkRules",
+                    "apiVersion": "2015-05-01-preview",
+                    "properties": {
+                        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('externalSubnetName'))]"
+                    },
+                    "dependsOn": [
+                        "[variables('sqlServerName')]"
+                    ]
                 }
             ]
         }
