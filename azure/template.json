@@ -1,0 +1,287 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "resourceEnvironmentName": {
+            "defaultValue": "dev",
+            "type": "string"
+        },
+        "serviceName": {
+            "defaultValue": "vnettest",
+            "type": "string"
+        },
+        "sqlServerAdminUsername": {
+            "type": "string"
+        },
+        "sqlServerAdminPassword": {
+            "type": "securestring"
+        }
+    },
+    "variables": {
+        "deploymentUrlBase": "https://raw.githubusercontent.com/SkillsFundingAgency/das-platform-building-blocks/as-vnet-integration/templates/",
+        "resourceNamePrefix": "[toLower(concat('poc-', parameters('resourceEnvironmentName'),'-', parameters('serviceName')))]",
+        "vnetName": "[concat(variables('resourceNamePrefix'), '-vnet')]",
+        "interalSubnetName": "[concat(variables('resourceNamePrefix'), '-int-app-sn-01')]",
+        "externalSubnetName": "[concat(variables('resourceNamePrefix'), '-int-app-sn-01')]",
+        "clientAppServiceName": "[concat(variables('resourceNamePrefix'), 'cli-as')]",
+        "clientAppServicePlanName": "[concat(variables('resourceNamePrefix'), 'cli-asp')]",
+        "apiAppServiceName": "[concat(variables('resourceNamePrefix'), 'api-as')]",
+        "apiAppServicePlanName": "[concat(variables('resourceNamePrefix'), 'api-asp')]",
+        "sqlServerName": "[concat(variables('resourceNamePrefix'), 'api-sql')]",
+        "apiUrl": "[concat('https://', variables('apiAppServiceName'), '.azurewebsites.net/api/test')]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2017-05-10",
+            "name": "virtual-network",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('deploymentUrlBase'),'virtual-network.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "armVnetName": {
+                        "value": "[variables('vnetName')]"
+                    },
+                    "armVnetAddressSpaceCIDR": {
+                        "value": "10.0.0.1/16"
+                    },
+                    "subnetConfiguration": {
+                        "value": [
+                            {
+                                "name": "[variables('interalSubnetName')]",
+                                "properties": {
+                                    "addressPrefix": "10.0.0.1/24",
+                                    "serviceEndpoints": [
+                                        "Microsoft.Web",
+                                        "Microsoft.Sql"
+                                    ]
+                                }
+                            },
+                            {
+                                "name": "[variables('externalSubnetName')]",
+                                "properties": {
+                                    "addressPrefix": "10.0.1.1/24",
+                                    "serviceEndpoints": [
+                                        "Microsoft.Web",
+                                        "Microsoft.Sql"
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "2017-05-10",
+            "name": "api-app-service-plan",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('deploymentUrlBase'),'app-service-plan.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "appServicePlanName": {
+                        "value": "[variables('apiAppServicePlanName')]"
+                    },
+                    "aspSize": {
+                        "value": "1"
+                    },
+                    "aspInstances": {
+                        "value": 2
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "2017-05-10",
+            "name": "client-app-service-plan",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('deploymentUrlBase'),'app-service-plan.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "appServicePlanName": {
+                        "value": "[variables('clientAppServicePlanName')]"
+                    },
+                    "aspSize": {
+                        "value": "1"
+                    },
+                    "aspInstances": {
+                        "value": 2
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "2017-05-10",
+            "name": "api-application-insights",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('deploymentUrlBase'),'application-insights.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "appInsightsName": {
+                        "value": "[variables('apiAppServiceName')]"
+                    },
+                    "attachedService": {
+                        "value": "[variables('apiAppServiceName')]"
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "2017-05-10",
+            "name": "client-application-insights",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('deploymentUrlBase'),'application-insights.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "appInsightsName": {
+                        "value": "[variables('clientAppServiceName')]"
+                    },
+                    "attachedService": {
+                        "value": "[variables('clientAppServiceName')]"
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "2017-05-10",
+            "name": "api-app-service",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('deploymentUrlBase'),'app-service.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "appServiceName": {
+                        "value": "[variables('apiAppServiceName')]"
+                    },
+                    "appServicePlanName": {
+                        "value": "[variables('apiAppServicePlanName')]"
+                    },
+                    "appServicePlanResourceGroup": {
+                        "value": "[resourceGroup().name]"
+                    },
+                    "ipSecurityRestrictions": {
+                        "value": [
+                            {
+                                "name": "Gateway",
+                                "action": "Allow",
+                                "priority": 100,
+                                "vnetSubnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('interalSubnetName'))]"
+                            }
+                        ]
+                    },
+                    "appServiceAppSettings": {
+                        "value": [
+                            {
+                                "name": "Environment",
+                                "value": "[parameters('resourceEnvironmentName')]"
+                            }
+                        ]
+                    },
+                    "subnetId": {
+                        "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('interalSubnetName'))]"
+                    }
+                },
+                "dependsOn": [
+                    "virtual-network",
+                    "api-app-service-plan"
+                ]
+            }
+        },
+        {
+            "apiVersion": "2017-05-10",
+            "name": "client-app-service",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('deploymentUrlBase'),'app-service.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "appServiceName": {
+                        "value": "[variables('clientAppServiceName')]"
+                    },
+                    "appServicePlanName": {
+                        "value": "[variables('clientAppServicePlanName')]"
+                    },
+                    "appServicePlanResourceGroup": {
+                        "value": "[resourceGroup().name]"
+                    },
+                    "appServiceAppSettings": {
+                        "value": [
+                            {
+                                "name": "Environment",
+                                "value": "[parameters('resourceEnvironmentName')]"
+                            },
+                            {
+                                "name": "ApiUrl",
+                                "value": "[variables('apiUrl')]"
+                            }
+                        ]
+                    },
+                    "subnetId": {
+                        "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('externalSubnetName'))]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "virtual-network",
+                "client-app-service-plan"
+            ]
+        },
+        {
+            "name": "[variables('sqlServerName')]",
+            "type": "Microsoft.Sql/servers",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "administratorLogin": "[parameters('sqlServerAdminUserName')]",
+                "administratorLoginPassword": "[parameters('sqlServerAdminPassword')]"
+            },
+            "resources": [
+                {
+                    "type": "databases",
+                    "apiVersion": "2014-04-01",
+                    "location": "[resourceGroup().location]",
+                    "name": "testdb",
+                    "properties": {},
+                    "dependsOn": [
+                        "[variables('sqlServerName')]"
+                    ]
+                }
+            ]
+        }
+    ],
+    "outputs": {
+        "clientAppServiceName": {
+            "type": "string",
+            "value": "[variables('clientAppServiceName')]"
+        },
+        "apiAppServiceName": {
+            "type": "string",
+            "value": "[variables('apiAppServiceName')]"
+        }
+    }
+}
