@@ -11,6 +11,7 @@
             "type": "string"
         },
         "sqlServerAdminUsername": {
+            "defaultValue": "sqladmin",
             "type": "string"
         },
         "sqlServerAdminPassword": {
@@ -29,7 +30,8 @@
         "apiAppServicePlanName": "[concat(variables('resourceNamePrefix'), 'api-asp')]",
         "sqlServerName": "[concat(variables('resourceNamePrefix'), 'api-sql')]",
         "apiUrl": "[concat('https://', variables('apiAppServiceName'), '.azurewebsites.net/api/test')]",
-        "databaseName": "testdb"
+        "databaseName": "testdb",
+        "storageAccountName": "[toLower(concat('poc', parameters('resourceEnvironmentName'), parameters('serviceName'),'3str'))]"
     },
     "resources": [
         {
@@ -61,6 +63,9 @@
                                         },
                                         {
                                             "service": "Microsoft.Sql"
+                                        },
+                                        {
+                                            "service": "Microsoft.Storage"
                                         }
                                     ],
                                     "delegations": [
@@ -86,6 +91,9 @@
                                         },
                                         {
                                             "service": "Microsoft.Sql"
+                                        },
+                                        {
+                                            "service": "Microsoft.Storage"
                                         }
                                     ],
                                     "delegations": [
@@ -236,7 +244,11 @@
                             },
                             {
                                 "name": "DatabaseConnectionString",
-                                "value": "[concat('Server=tcp:',reference(variables('sqlserverName')).fullyQualifiedDomainName,',1433;Initial Catalog=',variables('databaseName'),';Persist Security Info=False;User ID=',reference(variables('sqlserverName')).administratorLogin,';Password=',reference(variables('sqlserverName')).administratorLoginPassword,';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+                                "value": "[concat('Server=tcp:',reference(variables('sqlserverName')).fullyQualifiedDomainName,',1433;Initial Catalog=',variables('databaseName'),';Persist Security Info=False;User ID=',parameters('sqlServerAdminUsername'),';Password=',parameters('sqlServerAdminPassword'),';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
+                            },
+                            {
+                                "name": "StorageConnectionString",
+                                "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
                             }
                         ]
                     },
@@ -247,7 +259,8 @@
             },
             "dependsOn": [
                 "virtual-network",
-                "api-app-service-plan"
+                "api-app-service-plan",
+                "storage-account"
             ]
         },
         {
@@ -334,6 +347,32 @@
                         "[variables('sqlServerName')]"
                     ]
                 }
+            ]
+        },
+        {
+            "apiVersion": "2017-05-10",
+            "name": "storage-account",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('deploymentUrlBase'),'storage-account-arm.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "storageAccountName": {
+                        "value": "[variables('storageAccountName')]"
+                    },
+                    "subnetResourceIdList": {
+                        "value": [
+                            "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('interalSubnetName'))]",
+                            "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('externalSubnetName'))]"
+                        ]
+                    }
+                }
+            },
+            "dependsOn": [
+                "virtual-network"
             ]
         }
     ],
