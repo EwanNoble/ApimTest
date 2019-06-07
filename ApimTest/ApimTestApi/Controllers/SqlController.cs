@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Protocols;
 using System;
 using System.Collections.Generic;
@@ -13,13 +14,19 @@ namespace ApimTestApi.Controllers
     [ApiController]
     public class SqlController : ControllerBase
     {
+        private readonly IConfiguration _config;
+        public SqlController(IConfiguration config)
+        {
+            _config = config;
+        }
+
         // GET api/values
         [HttpGet]
         public ActionResult<string> Get()
         {
             try
             {
-                var connString = ConfigurationManager.AppSettings["DatabaseConnectionString"];
+                var connString = _config.GetValue<string>("DatabaseConnectionString");
                 using (var connection = new SqlConnection(connString))
                 {
                     connection.Open();
@@ -31,7 +38,7 @@ namespace ApimTestApi.Controllers
                             var response = "";
                             while (reader.Read())
                             {
-                                response += $"{reader.GetString(0)} {reader.GetString(1)}";
+                                response += $"{reader.GetString(0)}";
                             }
                             return response;
                         }
@@ -40,7 +47,7 @@ namespace ApimTestApi.Controllers
             }
             catch (Exception e)
             {
-                return $"{e.ToString()}";
+                return BadRequest($"{e.ToString()}");
             }
         }
     }
