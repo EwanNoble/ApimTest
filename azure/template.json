@@ -61,6 +61,17 @@
                                         {
                                             "service": "Microsoft.Sql"
                                         }
+                                    ],
+                                    "delegations": [
+                                        {
+                                            "name": "webapp",
+                                            "properties": {
+                                                "serviceName": "Microsoft.Web/serverFarms",
+                                                "actions": [
+                                                    "Microsoft.Network/virtualNetworks/subnets/action"
+                                                ]
+                                            }
+                                        }
                                     ]
                                 }
                             },
@@ -74,6 +85,17 @@
                                         },
                                         {
                                             "service": "Microsoft.Sql"
+                                        }
+                                    ],
+                                    "delegations": [
+                                        {
+                                            "name": "webapp",
+                                            "properties": {
+                                                "serviceName": "Microsoft.Web/serverFarms",
+                                                "actions": [
+                                                    "Microsoft.Network/virtualNetworks/subnets/action"
+                                                ]
+                                            }
                                         }
                                     ]
                                 }
@@ -192,10 +214,16 @@
                     "ipSecurityRestrictions": {
                         "value": [
                             {
-                                "name": "Gateway",
+                                "name": "[variables('interalSubnetName')]",
                                 "action": "Allow",
                                 "priority": 100,
                                 "vnetSubnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('interalSubnetName'))]"
+                            },
+                            {
+                                "name": "[variables('externalSubnetName')]",
+                                "action": "Allow",
+                                "priority": 102,
+                                "vnetSubnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('externalSubnetName'))]"
                             }
                         ]
                     },
