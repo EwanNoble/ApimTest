@@ -1,28 +1,23 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using ApimTestApi.Entities;
+using ApimTestApi.Interfaces;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Protocols;
 using System;
-using System.Collections.Generic;
-using System.Configuration;
 using System.Data.SqlClient;
-using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 
-namespace ApimTestApi.Controllers
+namespace ApimTestApi.ServiceValidators
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class SqlController : ControllerBase
+    public class SqlValidator : ISqlValidatorRepository
     {
         private readonly IConfiguration _config;
-        public SqlController(IConfiguration config)
+
+        public SqlValidator(IConfiguration config)
         {
             _config = config;
         }
 
-        // GET api/values
-        [HttpGet]
-        public ActionResult<string> Get()
+        public async Task<ResponseEntity> ValidateAsync()
         {
             try
             {
@@ -31,23 +26,23 @@ namespace ApimTestApi.Controllers
                 {
                     connection.Open();
 
-                    using (SqlCommand command = new SqlCommand("SELECT * FROM [dbo].[Test]", connection))
+                    using (SqlCommand command = new SqlCommand("SELECT @@VERSION AS 'SQL Server Version'", connection))
                     {
-                        using (SqlDataReader reader = command.ExecuteReader())
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
                         {
                             var response = "";
                             while (reader.Read())
                             {
                                 response += $"{reader.GetString(0)}";
                             }
-                            return response;
+                            return new ResponseEntity { Status = nameof(ResponseStatus.OK), Message = $"Successful Response From SQL {DateTime.UtcNow.ToLongTimeString()}" };
                         }
                     }
                 }
             }
             catch (Exception e)
             {
-                return BadRequest($"{e.ToString()}");
+                return new ResponseEntity { Status = nameof(ResponseStatus.FAIL), Message = e.Message };
             }
         }
     }

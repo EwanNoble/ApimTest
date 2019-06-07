@@ -36,7 +36,7 @@ namespace ApimTest.Controllers
                 using (HttpContent content = res.Content)
                 {
                     string data = await content.ReadAsStringAsync();
-                    return View(new IndexViewModel(input) { Text = $"{res.StatusCode} - {data}" });
+                    return View(new IndexViewModel(input) { Text = $"{data}" });
                 }
             }
             catch (Exception e)

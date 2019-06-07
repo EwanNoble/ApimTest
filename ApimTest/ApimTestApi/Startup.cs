@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ApimTestApi.ServiceValidators;
+using ApimTestApi.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -32,6 +34,11 @@ namespace ApimTestApi
             {
                 c.SwaggerDoc("v1", new Info { Title = "Test API", Version = "v1" });
             });
+
+            services.AddSingleton<ISqlValidatorRepository, SqlValidator>();
+            services.AddSingleton<IStorageValidatorRepository, StorageValidator>();
+
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
