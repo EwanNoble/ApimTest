@@ -324,31 +324,36 @@
                     "dependsOn": [
                         "[variables('sqlServerName')]"
                     ]
-                },
-                {
-                    "name": "[variables('interalSubnetName')]",
-                    "type": "virtualNetworkRules",
-                    "apiVersion": "2015-05-01-preview",
-                    "properties": {
-                        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('interalSubnetName'))]"
-                    },
-                    "dependsOn": [
-                        "[variables('sqlServerName')]"
-                    ]
-                },
-                {
-                    "name": "[variables('externalSubnetName')]",
-                    "type": "virtualNetworkRules",
-                    "apiVersion": "2015-05-01-preview",
-                    "properties": {
-                        "virtualNetworkSubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('externalSubnetName'))]"
-                    },
-                    "dependsOn": [
-                        "[variables('sqlServerName')]"
-                    ]
                 }
             ]
         },
+        {
+            "apiVersion": "2017-05-10",
+            "name": "sql-server-firewall-rule",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('deploymentUrlBase'),'sql-server-firewall-rules.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "serverName": {
+                        "value": "[variables('sqlServerName')]"
+                    },
+                    "subnetResourceIdList": {
+                        "value": [
+                            "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('interalSubnetName'))]",
+                            "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('externalSubnetName'))]"
+                        ]
+                    }
+                }
+            },
+            "dependsOn": [
+                "virtual-network",
+                "[variables('sqlServerName')]"
+            ]
+        },      
         {
             "apiVersion": "2017-05-10",
             "name": "storage-account",
