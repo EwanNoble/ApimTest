@@ -28,7 +28,8 @@
         "apiAppServiceName": "[concat(variables('resourceNamePrefix'), 'api-as')]",
         "apiAppServicePlanName": "[concat(variables('resourceNamePrefix'), 'api-asp')]",
         "sqlServerName": "[concat(variables('resourceNamePrefix'), 'api-sql')]",
-        "apiUrl": "[concat('https://', variables('apiAppServiceName'), '.azurewebsites.net/api/test')]"
+        "apiUrl": "[concat('https://', variables('apiAppServiceName'), '.azurewebsites.net/api/test')]",
+        "databaseName": "testdb"
     },
     "resources": [
         {
@@ -232,6 +233,10 @@
                             {
                                 "name": "Environment",
                                 "value": "[parameters('resourceEnvironmentName')]"
+                            },
+                            {
+                                "name": "DatabaseConnectionString",
+                                "value": "[concat('Server=tcp:',reference(variables('sqlserverName')).fullyQualifiedDomainName,',1433;Initial Catalog=',variables('databaseName'),';Persist Security Info=False;User ID=',reference(variables('sqlserverName')).administratorLogin,';Password=',reference(variables('sqlserverName')).administratorLoginPassword,';MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]"
                             }
                         ]
                     },
@@ -301,7 +306,7 @@
                     "type": "databases",
                     "apiVersion": "2014-04-01",
                     "location": "[resourceGroup().location]",
-                    "name": "testdb",
+                    "name": "[variables('databaseName')]",
                     "properties": {},
                     "dependsOn": [
                         "[variables('sqlServerName')]"
