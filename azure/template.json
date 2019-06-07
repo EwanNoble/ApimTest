@@ -199,7 +199,7 @@
                             }
                         ]
                     },
-                    "subnetId": {
+                    "subnetResourceId": {
                         "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('interalSubnetName'))]"
                     }
                 },
@@ -241,7 +241,7 @@
                             }
                         ]
                     },
-                    "subnetId": {
+                    "subnetResourceId": {
                         "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('externalSubnetName'))]"
                     }
                 }
