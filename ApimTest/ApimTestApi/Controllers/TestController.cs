@@ -13,10 +13,12 @@ namespace ApimTestApi.Controllers
     {
         private readonly ISqlValidatorRepository sqlValidator;
         private readonly IStorageValidatorRepository storageValidator;
-        public TestController(ISqlValidatorRepository _sqlValidator, IStorageValidatorRepository _storageValidator)
+        private readonly ICosmosValidatorRepository cosmosValidator;
+        public TestController(ISqlValidatorRepository _sqlValidator, IStorageValidatorRepository _storageValidator, ICosmosValidatorRepository _cosmosValidator)
         {
             sqlValidator = _sqlValidator;
             storageValidator = _storageValidator;
+            cosmosValidator = _cosmosValidator;
         }
 
         // GET api/values
@@ -25,20 +27,25 @@ namespace ApimTestApi.Controllers
         {
 
             try
-            {                
+            {
                 var sqlResponse = await sqlValidator.ValidateAsync();
                 var storageResponse = await storageValidator.ValidateAsync();
+                var cosmosResponse = await cosmosValidator.ValidateAsync();
 
                 var response = new JObject(
                                 new JProperty("Sql", new JObject(
                                     new JProperty("status", sqlResponse.Status),
                                     new JProperty("message", sqlResponse.Message)
                                 )),
-                                                                new JProperty("Storage", new JObject(
+                                new JProperty("Storage", new JObject(
                                     new JProperty("status", storageResponse.Status),
                                     new JProperty("message", storageResponse.Message)
+                                )),
+                                new JProperty("CosmosDb", new JObject(
+                                    new JProperty("status", cosmosResponse.Status),
+                                    new JProperty("message", cosmosResponse.Message)
                                 ))
-                );
+                            );
 
                 return response.ToString(Formatting.Indented);
             }

@@ -255,7 +255,16 @@
                             },
                             {
                                 "name": "StorageConnectionString",
-                                "value": "[reference('storage-account').outputs.storageConnectionString.value]"                            }
+                                "value": "[reference('storage-account').outputs.storageConnectionString.value]"
+                            },
+                            {
+                                "name": "CosmosDbEndpointUri",
+                                "value": "[concat('https://',variables('cosmosDbName'),'.documents.azure.com:443/')]"
+                            },
+                            {
+                                "name": "CosmosDbPrimaryKey",
+                                "value": "[reference('cosmos-db').outputs.PrimaryMasterKey.Value]"
+                            }
                         ]
                     },
                     "subnetResourceId": {
