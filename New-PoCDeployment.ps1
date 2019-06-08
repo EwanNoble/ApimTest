@@ -1,9 +1,9 @@
-using namespace System.Web
+$null = [Reflection.Assembly]::LoadWithPartialName("System.Web")
 
 try {
     $Location = "West Europe"
     $DeploymentParameters = @{
-        ResourceGroupName       = "vnet-integration-poc"
+        ResourceGroupName       = "dev-vnet-integration-rg"
         TemplateFile            = ".\azure\template.json"
         TemplateParameterObject = @{
             sqlServerAdminPassword = [System.Web.Security.Membership]::GeneratePassword(10, 0).Replace("&", "1")
