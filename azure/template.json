@@ -3,11 +3,11 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "resourceEnvironmentName": {
-            "defaultValue": "dev",
+            "defaultValue": "vnet",
             "type": "string"
         },
         "serviceName": {
-            "defaultValue": "vnettest",
+            "defaultValue": "integration",
             "type": "string"
         },
         "sqlServerAdminUsername": {
@@ -20,7 +20,7 @@
     },
     "variables": {
         "deploymentUrlBase": "https://raw.githubusercontent.com/SkillsFundingAgency/das-platform-building-blocks/as-vnet-integration/templates/",
-        "resourceNamePrefix": "[toLower(concat('poc-', parameters('resourceEnvironmentName'),'-', parameters('serviceName')))]",
+        "resourceNamePrefix": "[toLower(concat('dev-', parameters('resourceEnvironmentName'),'-', parameters('serviceName')))]",
         "vnetName": "[concat(variables('resourceNamePrefix'), '-vnet')]",
         "interalSubnetName": "[concat(variables('resourceNamePrefix'), '-int-app-sn-01')]",
         "externalSubnetName": "[concat(variables('resourceNamePrefix'), '-ext-app-sn-01')]",
@@ -31,7 +31,7 @@
         "sqlServerName": "[concat(variables('resourceNamePrefix'), 'api-sql')]",
         "apiUrl": "[concat('https://', variables('apiAppServiceName'), '.azurewebsites.net/api/test')]",
         "databaseName": "testdb",
-        "storageAccountName": "[toLower(concat('poc', parameters('resourceEnvironmentName'), parameters('serviceName'),'3str'))]",
+        "storageAccountName": "[toLower(concat('dev', parameters('resourceEnvironmentName'), parameters('serviceName'),'str'))]",
         "cosmosDbName": "[concat(variables('resourceNamePrefix'), '-cdb')]"
     },
     "resources": [
@@ -255,8 +255,7 @@
                             },
                             {
                                 "name": "StorageConnectionString",
-                                "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value)]"
-                            }
+                                "value": "[reference('storage-account').outputs.storageConnectionString.value]"                            }
                         ]
                     },
                     "subnetResourceId": {
@@ -266,8 +265,7 @@
             },
             "dependsOn": [
                 "virtual-network",
-                "api-app-service-plan",
-                "storage-account"
+                "api-app-service-plan"
             ]
         },
         {
