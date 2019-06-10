@@ -32,7 +32,24 @@
         "apiUrl": "[concat('https://', variables('apiAppServiceName'), '.azurewebsites.net/api/test')]",
         "databaseName": "testdb",
         "storageAccountName": "[toLower(concat('dev', parameters('resourceEnvironmentName'), parameters('serviceName'),'str'))]",
-        "cosmosDbName": "[concat(variables('resourceNamePrefix'), '-cdb')]"
+        "cosmosDbName": "[concat(variables('resourceNamePrefix'), '-cdb')]",
+        "subnetServiceEndpointList": [
+            "Microsoft.Web",
+            "Microsoft.Sql",
+            "Microsoft.Storage",
+            "Microsoft.AzureCosmosDB"
+        ],
+        "subnetDelegations": [
+            {
+                "name": "webapp",
+                "properties": {
+                    "serviceName": "Microsoft.Web/serverFarms",
+                    "actions": [
+                        "Microsoft.Network/virtualNetworks/subnets/action"
+                    ]
+                }
+            }
+        ]
     },
     "resources": [
         {
@@ -51,75 +68,73 @@
                     },
                     "armVnetAddressSpaceCIDR": {
                         "value": "10.0.0.0/16"
-                    },
-                    "subnetConfiguration": {
-                        "value": [
-                            {
-                                "name": "[variables('interalSubnetName')]",
-                                "properties": {
-                                    "addressPrefix": "10.0.0.0/24",
-                                    "serviceEndpoints": [
-                                        {
-                                            "service": "Microsoft.Web"
-                                        },
-                                        {
-                                            "service": "Microsoft.Sql"
-                                        },
-                                        {
-                                            "service": "Microsoft.Storage"
-                                        },
-                                        {
-                                            "service": "Microsoft.AzureCosmosDB"
-                                        }
-                                    ],
-                                    "delegations": [
-                                        {
-                                            "name": "webapp",
-                                            "properties": {
-                                                "serviceName": "Microsoft.Web/serverFarms",
-                                                "actions": [
-                                                    "Microsoft.Network/virtualNetworks/subnets/action"
-                                                ]
-                                            }
-                                        }
-                                    ]
-                                }
-                            },
-                            {
-                                "name": "[variables('externalSubnetName')]",
-                                "properties": {
-                                    "addressPrefix": "10.0.1.0/24",
-                                    "serviceEndpoints": [
-                                        {
-                                            "service": "Microsoft.Web"
-                                        },
-                                        {
-                                            "service": "Microsoft.Sql"
-                                        },
-                                        {
-                                            "service": "Microsoft.Storage"
-                                        },
-                                        {
-                                            "service": "Microsoft.AzureCosmosDB"
-                                        }
-                                    ],
-                                    "delegations": [
-                                        {
-                                            "name": "webapp",
-                                            "properties": {
-                                                "serviceName": "Microsoft.Web/serverFarms",
-                                                "actions": [
-                                                    "Microsoft.Network/virtualNetworks/subnets/action"
-                                                ]
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        ]
                     }
                 }
             }
+        },
+        {
+            "apiVersion": "2017-05-10",
+            "name": "internal-subnet",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('deploymentUrlBase'),'subnet.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "virtualNetworkName": {
+                        "value": "[variables('vnetName')]"
+                    },
+                    "subnetName": {
+                        "value": "[variables('interalSubnetName')]"
+                    },
+                    "subnetAddressPrefix": {
+                        "value": "10.0.0.0/24"
+                    },
+                    "serviceEndpointList": {
+                        "value": "[variables('subnetServiceEndpointList')]"
+                    },
+                    "delegations": {
+                        "value": "[variables('subnetDelegations')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "virtual-network"
+            ]
+        },
+        {
+            "apiVersion": "2017-05-10",
+            "name": "external-subnet",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('deploymentUrlBase'),'subnet.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "virtualNetworkName": {
+                        "value": "[variables('vnetName')]"
+                    },
+                    "subnetName": {
+                        "value": "[variables('interalSubnetName')]"
+                    },
+                    "subnetAddressPrefix": {
+                        "value": "10.0.0.0/24"
+                    },
+                    "serviceEndpointList": {
+                        "value": "[variables('subnetServiceEndpointList')]"
+                    },
+                    "delegations": {
+                        "value": "[variables('subnetDelegations')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "virtual-network"
+            ]
         },
         {
             "apiVersion": "2017-05-10",
@@ -273,7 +288,8 @@
                 }
             },
             "dependsOn": [
-                "virtual-network",
+                "internal-subnet",
+                "external-subnet",
                 "api-app-service-plan"
             ]
         },
@@ -315,7 +331,8 @@
                 }
             },
             "dependsOn": [
-                "virtual-network",
+                "internal-subnet",
+                "external-subnet",
                 "client-app-service-plan"
             ]
         },
@@ -364,7 +381,8 @@
                 }
             },
             "dependsOn": [
-                "virtual-network",
+                "internal-subnet",
+                "external-subnet",
                 "[variables('sqlServerName')]"
             ]
         },
@@ -391,7 +409,8 @@
                 }
             },
             "dependsOn": [
-                "virtual-network"
+                "internal-subnet",
+                "external-subnet"
             ]
         },
         {
@@ -426,7 +445,8 @@
                 }
             },
             "dependsOn": [
-                "virtual-network"
+                "internal-subnet",
+                "external-subnet"
             ]
         }
     ],
